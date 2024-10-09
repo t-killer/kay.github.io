@@ -34,11 +34,11 @@
 		}
 
 		function setup() {
-			createCanvas(screenWidth, screenHeight);
+			createCanvas(screenHeight, screenWidth);
 
 			// Create the video and hide it
 			video = createCapture(VIDEO);
-			video.size(screenWidth, screenHeight);
+			video.size(screenHeight, screenWidth);
 			video.hide();
 
 			// Start detecting poses in the webcam video
