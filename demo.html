@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pose Detection with Contour</title>
+    <script src="p5.min.js"></script>
+    <script src="ml5.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+    <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script> -->
+    <script src="p5.dom.min.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #toggleCamera {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 3.053vw;
+            border: none;
+            cursor: pointer;
+            position: fixed;
+            bottom: 17.17vw;
+            right: 16.28vw;
+            z-index: 10;
+            width: 13.2vw;
+            height: 13.2vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 100%;
+            flex-wrap: wrap;
+        }
+
+
+        #toggleCamera span {
+            margin-top: -3vw;
+        }
+
+        #toggleCamera:hover {
+            background-color: #45a049;
+        }
+
+        #exitCamera {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 3.053vw;
+            border: none;
+            cursor: pointer;
+            position: fixed;
+            bottom: 17.17vw;
+            left: 50%;
+            margin-left: -6.6vw;
+            z-index: 10;
+            width: 13.2vw;
+            height: 13.2vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 100%;
+            flex-wrap: wrap;
+        }
+
+        #exitCamera.active {
+            display: none;
+        }
+
+        #exitCamera span {
+            margin-top: -3vw;
+        }
+
+        #exitCamera:hover {
+            background-color: #45a049;
+        }
+
+        #demoCamera {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 3.053vw;
+            border: none;
+            cursor: pointer;
+            position: fixed;
+            bottom: 17.17vw;
+            left: 16.28vw;
+            z-index: 10;
+            width: 13.2vw;
+            height: 13.2vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 100%;
+            flex-wrap: wrap;
+        }
+
+        #demoCamera span {
+            margin-top: -3vw;
+        }
+
+        #phonevideo {
+            background-color: #45a049;
+            color: white;
+            font-size: 3.053vw;
+            border: none;
+            cursor: pointer;
+            position: fixed;
+            bottom: 17.17vw;
+            left: 50%;
+            margin-left: -6.6vw;
+            z-index: 10;
+            width: 13.2vw;
+            height: 13.2vw;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border-radius: 100%;
+            flex-wrap: wrap;
+        }
+
+        #phonevideo.active {
+            display: flex;
+        }
+
+        #phonevideo span {
+            margin-top: -3vw;
+        }
+
+        #demoCamera:hover {
+            background-color: #45a049;
+        }
+
+        .body_title {
+            background-color: #000;
+            font-size: 5.1vw;
+            width: 61vw;
+            height: 14.2vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2vw;
+            color: #fff;
+        }
+
+        .body_title_sed {
+            background: none;
+            height: auto;
+            display: block;
+        }
+
+        .body_title_sed h2 {
+            height: 10vw;
+            display: flex;
+            align-items: center;
+            padding-left: 3vw;
+            padding-right: 3vw;
+            font-size: 4.2vw;
+            border: 1px solid #fff;
+            background: #333;
+            margin: 0;
+            position: relative;
+        }
+
+        #jindutiao {
+            position: absolute;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 1;
+            background: linear-gradient(90deg, #FC3F6E54 0%, #FC3F6E 100%);
+        }
+
+        .body_title_sed h2 span {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .body_title_sed h2 span span {
+            display: block;
+            width: auto;
+        }
+
+        .body_title_sed p {
+            font-size: 3.4vw;
+            color: #fff;
+            margin: 0;
+            padding-top: 0.5vw;
+        }
+
+        .time_out {
+            width: 50vw;
+            height: 50vw;
+            background-color: rgba(255, 255, 255, 0.6);
+            font-size: 6.2vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-flow: column;
+            border-radius: 5vw;
+        }
+
+        .time_out h2 {
+            font-size: 20vw;
+            margin: 0;
+        }
+
+        .time_out p {
+            margin: 0;
+        }
+
+        .z_tanchuang {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 99;
+            background: rgba(0, 0, 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .z_tanchuang .tanchuang {
+            width: 60%;
+            background: #fff;
+            border-radius: 1vw;
+            color: #333;
+            box-sizing: border-box;
+            padding: 3vw;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .z_tanchuang .tanchuang .jindu {
+            width: 100%;
+            background: #E3E3ED;
+            height: 3vw;
+            position: relative;
+            border-radius: 2vw;
+        }
+
+        .z_tanchuang .tanchuang p {
+            margin: 0;
+            padding-bottom: 3vw;
+        }
+
+        .z_tanchuang .tanchuang .jindu i {
+            position: absolute;
+            z-index: 9;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #3A61ED85 0%, #0682EB 100%);
+            border-radius: 2vw;
+        }
+
+        .z_tanchuang1 {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 999;
+            background: rgba(0, 0, 0);
+            display: none;
+            align-items: flex-end;
+        }
+
+        .z_tanchuang1.active {
+            display: flex;
+        }
+
+        .z_tanchuang1 .tanchuang {
+            width: 100%;
+            background: #fff;
+            border-radius: 2vw 2vw 0 0;
+            color: #333;
+            box-sizing: border-box;
+            padding: 3vw;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .z_tanchuang1 .tanchuang p {
+            margin: 0;
+            padding-bottom: 6vw;
+        }
+
+        .z_tanchuang1 .tanchuang .danxuan {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6vw;
+            width: 100%;
+        }
+
+        .z_tanchuang1 .tanchuang .danxuan img {
+            width: 38%;
+            margin-right: 2vw;
+        }
+
+        .z_tanchuang1 .tanchuang .danxuan ul {
+            width: 58%;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
+
+        .z_tanchuang1 .tanchuang .danxuan ul li {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #666;
+            margin-bottom: 3vw;
+        }
+
+        .z_tanchuang1 .tanchuang .danxuan ul li.active {
+            color: #0682EB;
+        }
+
+        .z_tanchuang1 .tanchuang .danxuan ul li .dian {
+            background: #E3E3ED;
+            width: 3vw;
+            height: 3vw;
+            border-radius: 50%;
+            margin-right: 2vw;
+        }
+
+        .z_tanchuang1 .tanchuang .danxuan ul li.active .dian {
+            background: #0682EB;
+        }
+
+        .z_tanchuang1 .tanchuang .danxuan ul li:last-child {
+            margin-bottom: 0;
+        }
+
+        .z_tanchuang1 .tanchuang .anniu {
+            width: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 10vw;
+            background: #0682EB;
+            color: #fff;
+            border-radius: 40vw;
+            margin-bottom: 3vw;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="demoCamera">
+        <img src="p4.png">
+        <span>示范</span>
+    </button>
+    <button id="exitCamera">
+        <img src="p3.png">
+        <span>退出</span>
+    </button>
+    <button id="phonevideo">
+        <img src="p3.png">
+        <span>拍照</span>
+    </button>
+
+    <button id="toggleCamera">
+        <img src="p2.png">
+        <span>翻转</span>
+    </button>
+
+    <div class="z_tanchuang1" id="myElement">
+        <div class="tanchuang">
+            <p>做动作时，以下部位是否有不适或<br>酸痛？</p>
+            <div class="danxuan">
+                <img src="">
+                <ul>
+                    <li class="z_danxuan active">
+                        <div class="dian"></div>膝部前侧疼痛
+                    </li>
+                    <li class="z_danxuan">
+                        <div class="dian"></div>中间骨头疼
+                    </li>
+                    <li class="z_danxuan">
+                        <div class="dian"></div>没有这些感觉
+                    </li>
+                </ul>
+            </div>
+            <div class="anniu">提交，并继续下一组动作</div>
+        </div>
+    </div>
+    <script>
+        let video;
+        let poseNet;
+        let poses = [];
+        let lastPoses = [];
+        let frontCamera = true;
+        let videoReady = false;
+        const targetFrameRate = 20;
+        let contourImage;
+        let backgroundImage; // 用于存储背景图
+        let instructionDiv; // canvas内顶部指示框
+        let countdownStarted = false; // 标志变量，防止倒计时重复触发
+        let countdownDiv; // 用于显示倒计时的弹窗
+        let countdownTimer;
+        let countdownInterval;
+        let countdownActive = false; // 用于标识倒计时期间不再更新姿势状态文案
+        let currentPoseCorrect = false; // 标识当前姿势是否正确
+        let countdownFinished = false; // 标识倒计时是否完成
+        let faceImage; // 卡通头像
+
+
+        // 进度条相关
+        let countdownprogress = false; // 标志变量，防止进度条重复触发
+        let countbarDiv; // 用于显示进度条的弹窗
+        let countbarTimer;
+        let countbarInterval;
+        let countbarActive = false; // 用于标识进度条期间不再更新姿势状态文案
+        let countdownbar = false; // 标识进度条是否完成
+        let countbarzero = false;
+
+        //弹窗里的进度条
+        let tandownprogress = false; // 标志变量，防止进度条重复触发
+        let tanbarDiv; // 用于显示进度条的弹窗
+        let tanbarTimer;
+        let tanbarInterval;
+        let tanbarActive = false; // 用于标识进度条期间不再更新姿势状态文案
+        let tandownbar = false; // 标识进度条是否完成
+
+        // 预加载轮廓图
+        function preload() {
+            contourImage = loadImage('body.png'); // 人体轮廓图的路径
+            backgroundImage = loadImage('p1.png'); // 背景图的路径
+            faceImage = loadImage('p5.png'); // 卡通头像的路径
+        }
+
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight); // 设置 canvas 全屏显示
+            frameRate(targetFrameRate);
+            initializeCamera();
+            const toggleButton = select('#toggleCamera');
+            toggleButton.mousePressed(toggleCamera);
+
+            const phoneButton = select('#phonevideo');
+            phoneButton.mousePressed(phonevideo);
+
+
+            // 创建指示框 div
+            instructionDiv = createDiv('<div class="body_title">请保持身体在轮廓内</div>');
+
+            // 设置指示框的位置，人体轮廓图上方
+            let divTop = windowHeight * 0.08;
+
+            instructionDiv.position((windowWidth - windowWidth * 0.61) / 2, divTop); // 居中
+        }
+
+        function initializeCamera() {
+            videoReady = false;
+
+            if (video && video.elt.srcObject) {
+                const tracks = video.elt.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                video.remove();
+            }
+
+            video = createCapture({
+                video: {
+                    facingMode: frontCamera ? "user" : "environment"
+                }
+            }, () => {
+                videoReady = true;
+            });
+            video.size(width, height);
+            video.hide();
+
+            poseNet = ml5.poseNet(video, modelReady);
+            poseNet.on("pose", function (results) {
+                poses = results;
+                if (poses.length > 0) {
+                    lastPoses = poses;
+                }
+            });
+        }
+
+        function modelReady() {
+            console.log("模型加载完成");
+        }
+
+        function draw() {
+            if (videoReady) {
+                image(video, 0, 0, width, height); // 显示视频
+                image(backgroundImage, 0, 0, width, height); // 绘制背景图片
+
+                let contourWidth = windowWidth * 0.64;
+                let contourHeight = windowHeight * 0.62;
+                let contourX = (windowWidth - contourWidth) / 2;
+                let contourY = (windowHeight - contourHeight) / 2;
+                image(contourImage, contourX, contourY, contourWidth, contourHeight); // 绘制人体轮廓图
+
+                let currentPoses = poses.length > 0 ? poses : lastPoses;
+
+                if (currentPoses.length > 0) {
+                    const pose = currentPoses[0].pose;
+
+                    // 绘制面部卡通头像
+                    drawFaceOverlay(pose);
+
+                    if (isPoseCorrect(pose)) {
+                        currentPoseCorrect = true;
+                    } else {
+                        currentPoseCorrect = false;
+                    }
+
+                    // 如果姿势正确，倒计时未激活，且倒计时未完成，启动倒计时
+                    if (currentPoseCorrect && !countdownActive && !countdownFinished) {
+                        drawSkeleton(255, 255, 255); // 正确姿势骨架
+                        drawKeypoints(48, 226, 3); // 正确姿势绿点
+                        instructionDiv.html('<div class="body_title">请保持静止</div>'); // 姿势正确时文案
+
+                        if (!countdownStarted) {
+                            countdownStarted = true;
+                            clearTimeout(countdownTimer);
+                            countdownTimer = setTimeout(() => {
+                                // 开始倒计时，更新文案为“准备拍摄”
+                                instructionDiv.html('<div class="body_title">准备拍摄</div>');
+                                countdownActive = true; // 标记倒计时开始
+                                startCountdown(); // 启动倒计时弹窗
+                            }, 1000); // 姿势正确1秒后触发倒计时
+                        }
+                    } else if (!countdownActive && !countdownFinished) {
+                        // 姿势不正确或倒计时未激活，保持“请保持身体在轮廓内”文案
+                        drawSkeleton(255, 255, 255); // 错误姿势骨架
+                        drawKeypoints(223, 24, 53); // 错误姿势红点
+                        instructionDiv.html('<div class="body_title">请保持身体在轮廓内</div>');
+                        countdownStarted = false;
+                        clearTimeout(countdownTimer); // 清除之前的倒计时
+                        if (countdownDiv) {
+                            countdownDiv.remove();
+                        }
+
+                        countdownprogress = false;
+                        countbarzero = false;
+                        clearTimeout(countbarTimer); // 清除之前的进度条
+
+                        if (countbarDiv) {
+                            countbarDiv.remove();
+                        }
+                    }
+
+                    if (countdownActive) {
+                        // 倒计时期间也保持骨架和关键点
+                        drawSkeleton(255, 255, 255); // 正确姿势骨架
+                        drawKeypoints(48, 226, 3); // 正确姿势绿点
+                    }
+
+                    // 倒计时结束后的逻辑
+                    if (countdownFinished) {
+                        if (currentPoseCorrect) {
+                            instructionDiv.html('<div class="body_title body_title_sed"><h2>单腿支撑抬右腿</h2><p>请保持设备平稳 倒计时结束前不要退出</p></div>'); // 姿势正确后更新文案
+                            drawSkeleton(255, 255, 255); // 保持绿色骨架
+                            drawKeypoints(48, 226, 3); // 保持绿色点
+
+                            countbarzero = true;
+                            if (frontCamera) {
+                                if (!countdownprogress) {
+                                    countdownprogress = true;
+                                    clearTimeout(countbarTimer);
+                                    countbarTimer = setTimeout(() => {
+
+                                        countbarActive = true; // 标记倒计时开始
+                                        ProgressCountdown(); // 启动倒计时弹窗
+                                    }, 1000); // 姿势正确1秒后触发倒计时
+                                }
+                            } else {
+                                // 拍照
+                                var element1 = document.getElementById("demoCamera");
+                                element1.classList.add("active");
+                                var element2 = document.getElementById("exitCamera");
+                                element2.classList.add("active");
+                                var element3 = document.getElementById("toggleCamera");
+                                element3.classList.add("active");
+                                var element4 = document.getElementById("phonevideo");
+                                element4.classList.add("active");
+
+                            }
+                        } else {
+                            instructionDiv.html('<div class="body_title">请保持身体在轮廓内</div>'); // 如果姿势不正确，重置文案
+                            countdownFinished = false; // 重置倒计时标志，允许重新开始倒计时
+                        }
+                    }
+
+                }
+
+                // 进度条结束后的逻辑
+                if (countdownbar) {
+                    if (currentPoseCorrect) {
+                        if (!tandownprogress) {
+                            tandownprogress = true;
+                            clearTimeout(tanbarTimer);
+                            tanbarTimer = setTimeout(() => {
+
+                                tanbarActive = true; // 标记倒计时开始
+                                ProgressTandown(); // 启动倒计时弹窗
+                            }, 1000); // 姿势正确1秒后触发倒计时
+                        }
+                    } else {
+                        countdownbar = false; // 重置倒计时标志，允许重新开始倒计时
+                    }
+                }
+
+                // 弹窗进度条结束后的逻辑
+                if (tandownbar) {
+                    if (currentPoseCorrect) {
+                        var element = document.getElementById("myElement");
+                        element.classList.add("active");
+                    } else {
+                        tandownbar = false; // 重置倒计时标志，允许重新开始倒计时
+                    }
+                }
+
+
+            } else {
+                clear();
+                background(0);
+            }
+        }
+
+
+        function drawKeypoints(r, g, b) {
+            let currentPoses = poses.length > 0 ? poses : lastPoses;
+            for (let i = 0; i < currentPoses.length; i++) {
+                //const pose = currentPoses[i].pose;
+                const pose = currentPoses[0].pose;
+                for (let j = 0; j < pose.keypoints.length; j++) {
+                    const keypoint = pose.keypoints[j];
+                    if (keypoint.score > 0.1) {
+                        fill(r, g, b);
+                        noStroke();
+                        strokeWeight(4);
+                        ellipse(keypoint.position.x * (width / video.width), keypoint.position.y * (height / video.height), 15, 15);
+                    }
+                }
+            }
+        }
+
+        function drawSkeleton(r, g, b) {
+            let currentPoses = poses.length > 0 ? poses : lastPoses;
+            for (let i = 0; i < currentPoses.length; i++) {
+                //const skeleton = currentPoses[i].skeleton;
+                const skeleton = currentPoses[0].skeleton;
+                for (let j = 0; j < skeleton.length; j++) {
+                    const partA = skeleton[j][0];
+                    const partB = skeleton[j][1];
+                    stroke(r, g, b);
+                    strokeWeight(5);
+                    line(partA.position.x * (width / video.width), partA.position.y * (height / video.height),
+                        partB.position.x * (width / video.width), partB.position.y * (height / video.height));
+                }
+            }
+        }
+
+        // 判断用户是否在轮廓区域内
+        function isPoseCorrect(pose) {
+            let isInside = true;
+            const contourWidth = windowWidth * 0.54;
+            const contourHeight = windowHeight * 0.52;
+            const contourX = (windowWidth - contourWidth) / 2;
+            const contourY = (windowHeight - contourHeight) / 2;
+            const x1 = contourX,
+                y1 = contourY,
+                x2 = contourX + contourWidth,
+                y2 = contourY + contourHeight;
+
+            // for (let i = 0; i < pose.keypoints.length; i++) {
+            //     const keypoint = pose.keypoints[i];
+            //     if (keypoint.score > 0.2) {  // 确保关键点被检测到
+            //         const { x, y } = keypoint.position;
+            //         if (x < x1 || x > x2 || y < y1 || y > y2) {
+            //             isInside = false;
+            //             break;
+            //         }
+            //     }
+            // }
+
+            // 检查面部关键点是否都在模态框内
+            const faceKeypoints = ['nose', 'leftEye', 'rightEye', 'leftEar', 'rightEar'];
+            for (let i = 0; i < faceKeypoints.length; i++) {
+                const keypoint = pose.keypoints.find(k => k.part === faceKeypoints[i]);
+                if (keypoint && keypoint.score > 0.2) { // 确保关键点被检测到
+                    const {
+                        x,
+                        y
+                    } = keypoint.position;
+                    if (x < x1 || x > x2 || y < y1 || y > y2) {
+                        isInside = false;
+                        break;
+                    }
+                }
+            }
+            return isInside;
+        }
+
+
+        function toggleCamera() {
+            frontCamera = !frontCamera;
+            poses = [];
+            videoReady = false;
+            clear();
+            initializeCamera();
+        }
+
+        function phonevideo() {
+            if (currentPoseCorrect) {
+                if (!tandownprogress) {
+                    tandownprogress = true;
+                    clearTimeout(tanbarTimer);
+                    tanbarTimer = setTimeout(() => {
+
+                        tanbarActive = true; // 标记倒计时开始
+                        ProgressTandown(); // 启动倒计时弹窗
+                    }, 1000); // 姿势正确1秒后触发倒计时
+                }
+            } else {
+                countdownbar = false; // 重置倒计时标志，允许重新开始倒计时
+            }
+        }
+
+
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        // 启动倒计时弹窗
+        function startCountdown() {
+            if (countdownDiv) {
+                countdownDiv.remove();
+            }
+
+            // 创建倒计时弹窗
+            countdownDiv = createDiv('<div class="time_out"><h2>3秒</h2><p>后可以拍摄</p></div>');
+            countdownDiv.position((windowWidth - windowWidth * 0.5) / 2, windowHeight * 0.7 / 2); // 居中显示
+
+            let countdown = 3;
+            countdownInterval = setInterval(() => {
+                countdownDiv.html(`<div class="time_out"><h2>${countdown}秒</h2><p>后可以拍摄</p></div>`);
+                countdown--;
+                if (countdown < 0) {
+                    clearInterval(countdownInterval); // 倒计时结束
+                    countdownDiv.remove(); // 移除倒计时弹窗
+                    countdownActive = false; // 倒计时结束，重新允许姿势验证
+                    countdownFinished = true; // 标记倒计时已完成
+                }
+            }, 1000);
+        }
+
+        // 绘制面部卡通头像
+        function drawFaceOverlay(pose) {
+            const nose = pose.keypoints.find(k => k.part === 'nose');
+            const leftEye = pose.keypoints.find(k => k.part === 'leftEye');
+            const rightEye = pose.keypoints.find(k => k.part === 'rightEye');
+
+            if (nose && leftEye && rightEye) {
+                // 获取面部中心点
+                const faceX = nose.position.x * (width / video.width);
+                const faceY = nose.position.y * (height / video.height);
+
+                // 动态计算面部角度，基于眼睛的位置
+                // const eyeDistance = dist(leftEye.position.x, leftEye.position.y, rightEye.position.x, rightEye.position.y);
+                // const faceScale = eyeDistance / 50; // 调整卡通头像的大小
+
+                // 固定的卡通头像大小，不再根据眼睛距离动态调整
+                const avatarWidth = 100; // 头像的宽度
+                const avatarHeight = 100; // 头像的高度
+
+                // 计算面部角度，基于眼睛的位置
+                const faceAngle = atan2(rightEye.position.y - leftEye.position.y, rightEye.position.x - leftEye.position.x);
+
+
+                // 绘制卡通头像
+                push();
+                translate(faceX, faceY);
+                //rotate(faceAngle); // 根据眼睛的相对位置旋转头像
+                //image(faceImage, -faceScale * 50, -faceScale * 50, faceScale * 100, faceScale * 100);//动态大小
+                image(faceImage, -avatarWidth / 2, -avatarHeight / 2, avatarWidth, avatarHeight); // 固定大小
+                pop();
+            }
+        }
+
+        // 启动进度条
+        function ProgressCountdown() {
+            if (countbarDiv) {
+                countbarDiv.remove();
+            }
+
+            // 设置指示框的位置，人体轮廓图上方
+            let divTop1 = windowHeight * 0.08;
+            countbarDiv = createDiv('<div class="body_title body_title_sed"><h2><i id="jindutiao" style="width:0%;"></i><span>单腿支撑抬右腿<span>00</span></span></h2><p>请保持设备平稳 倒计时结束前不要退出</p></div>');
+            countbarDiv.position((windowWidth - windowWidth * 0.61) / 2, divTop1); // 居中
+
+            let countbardown = 1;
+            let countbardown1 = 1;
+            let countbardown2 = '01';
+
+            if (countbarzero) {
+                clearInterval(countbarInterval);
+            } else {
+                countbarInterval = setInterval(() => {
+                    countbarDiv.html(`<div class="body_title body_title_sed"><h2><i id="jindutiao" style="width:${countbardown}%;"></i><span>单腿支撑抬右腿<span>${countbardown2}</span></span></h2><p>请保持设备平稳 倒计时结束前不要退出</p></div>`);
+                    countbardown++;
+                    countbardown1++;
+                    if (countbardown1 == 5) {
+                        countbardown2 = '02'
+                    } else if (countbardown1 == 10) {
+                        countbardown2 = '03'
+                    } else if (countbardown1 == 15) {
+                        countbardown2 = '04'
+                    } else if (countbardown1 == 20) {
+                        countbardown2 = '05'
+                    } else if (countbardown1 == 25) {
+                        countbardown2 = '06'
+                    } else if (countbardown1 == 30) {
+                        countbardown2 = '07'
+                    } else if (countbardown1 == 35) {
+                        countbardown2 = '08'
+                    } else if (countbardown1 == 40) {
+                        countbardown2 = '09'
+                    } else if (countbardown1 == 45) {
+                        countbardown2 = '10'
+                    } else if (countbardown1 == 50) {
+                        countbardown2 = '11'
+                    } else if (countbardown1 == 55) {
+                        countbardown2 = '12'
+                    } else if (countbardown1 == 60) {
+                        countbardown2 = '13'
+                    } else if (countbardown1 == 65) {
+                        countbardown2 = '14'
+                    } else if (countbardown1 == 70) {
+                        countbardown2 = '15'
+                    } else if (countbardown1 == 75) {
+                        countbardown2 = '16'
+                    } else if (countbardown1 == 80) {
+                        countbardown2 = '17'
+                    } else if (countbardown1 == 85) {
+                        countbardown2 = '18'
+                    } else if (countbardown1 == 90) {
+                        countbardown2 = '19'
+                    } else if (countbardown1 == 95) {
+                        countbardown2 = '20'
+                    }
+                    if (countbardown > 100) {
+                        clearInterval(countbarInterval); // 倒计时结束
+                        setTimeout(function () {
+                            countbarDiv.remove();
+                        }, 2000)
+                        countbarActive = false; // 倒计时结束，重新允许姿势验证
+                        countdownbar = true; // 标记倒计时已完成
+                    }
+                }, 200);
+            }
+            countbarInterval = setInterval(() => {
+                countbarDiv.html(`<div class="body_title body_title_sed"><h2><i id="jindutiao" style="width:${countbardown}%;"></i><span>单腿支撑抬右腿<span>${countbardown2}</span></span></h2><p>请保持设备平稳 倒计时结束前不要退出</p></div>`);
+                countbardown++;
+                countbardown1++;
+                if (countbardown1 == 5) {
+                    countbardown2 = '02'
+                } else if (countbardown1 == 10) {
+                    countbardown2 = '03'
+                } else if (countbardown1 == 15) {
+                    countbardown2 = '04'
+                } else if (countbardown1 == 20) {
+                    countbardown2 = '05'
+                } else if (countbardown1 == 25) {
+                    countbardown2 = '06'
+                } else if (countbardown1 == 30) {
+                    countbardown2 = '07'
+                } else if (countbardown1 == 35) {
+                    countbardown2 = '08'
+                } else if (countbardown1 == 40) {
+                    countbardown2 = '09'
+                } else if (countbardown1 == 45) {
+                    countbardown2 = '10'
+                } else if (countbardown1 == 50) {
+                    countbardown2 = '11'
+                } else if (countbardown1 == 55) {
+                    countbardown2 = '12'
+                } else if (countbardown1 == 60) {
+                    countbardown2 = '13'
+                } else if (countbardown1 == 65) {
+                    countbardown2 = '14'
+                } else if (countbardown1 == 70) {
+                    countbardown2 = '15'
+                } else if (countbardown1 == 75) {
+                    countbardown2 = '16'
+                } else if (countbardown1 == 80) {
+                    countbardown2 = '17'
+                } else if (countbardown1 == 85) {
+                    countbardown2 = '18'
+                } else if (countbardown1 == 90) {
+                    countbardown2 = '19'
+                } else if (countbardown1 == 95) {
+                    countbardown2 = '20'
+                }
+                if (countbardown > 100) {
+                    clearInterval(countbarInterval); // 倒计时结束
+                    setTimeout(function () {
+                        countbarDiv.remove();
+                    }, 2000)
+                    countbarActive = false; // 倒计时结束，重新允许姿势验证
+                    countdownbar = true; // 标记倒计时已完成
+                }
+            }, 200);
+        }
+
+        // 启动弹窗进度条
+        function ProgressTandown() {
+            if (tanbarDiv) {
+                tanbarDiv.remove();
+            }
+
+            tanbarDiv = createDiv('<div class="z_tanchuang"><div class="tanchuang"><p>拍摄的动作上传中<br>请不要关闭本页</p><div class="jindu"><i style="width:0%"></i></div><span>0%</span></div></div>');
+
+            let tanbardown = 1;
+            tanbarInterval = setInterval(() => {
+                tanbarDiv.html(`<div class="z_tanchuang"><div class="tanchuang"><p>拍摄的动作上传中<br>请不要关闭本页</p><div class="jindu"><i style="width:${tanbardown}%"></i></div><span>${tanbardown}%</span></div></div>`);
+                tanbardown++;
+                if (tanbardown > 100) {
+                    clearInterval(tanbarInterval); // 倒计时结束
+                    tanbarActive = false; // 倒计时结束，重新允许姿势验证
+                    tandownbar = true; // 标记倒计时已完成
+                }
+            }, 100);
+        }
+
+        var arr = document.getElementsByClassName("z_danxuan");
+        for (let i = 0; i < arr.length; i++) {
+            arr[i].onclick = function () {
+                arr[i].classList.add("active");
+                for (let j = 0; j < arr.length; j++) {
+                    if (j != i) {
+                        arr[j].classList.remove("active");
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
